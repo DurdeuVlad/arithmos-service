@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    container_name: arithmos_api
+    image: arithmos_api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./data/request_logs.db
+      - METRICS_PORT=8001
+      - JWT_SECRET_KEY=change-me
+      - BROKER_URL=amqp://guest:guest@rabbitmq/
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+      - rabbitmq
+    volumes:
+      - ./data:/app/data
+    command: >
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "curl -f http://localhost:8000/health || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:6-alpine
+    container_name: arithmos_redis
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: arithmos_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  tests:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    container_name: arithmos_tests
+    image: arithmos_api
+    depends_on:
+      api:
+        condition: service_healthy
+    entrypoint:
+      - sh
+      - -c
+    command: >
+      pytest --maxfail=1 --disable-warnings -q
+    volumes:
+      - ../:/app:ro
