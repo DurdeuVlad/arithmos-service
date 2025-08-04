@@ -1,6 +1,8 @@
-# arithmos-service
+# 🧮 Arithmos Service
 
-A simple, production-ready microservice in FastAPI providing mathematical operations (power, Fibonacci, factorial) with request logging, caching, monitoring, and optional authentication and messaging.
+A production-grade FastAPI microservice delivering essential mathematical operations (**power**, **Fibonacci**, **factorial**) with built-in request logging, Redis-based caching, Prometheus monitoring (optional), and support for JWT authentication and asynchronous messaging (RabbitMQ/Kafka).
+
+---
 
 ## 📂 Project Structure
 
@@ -13,45 +15,44 @@ arithmos-service/
 │   ├── services/
 │   │   └── calculator.py     # Core logic: pow, fib, fact
 │   ├── models/
-│   │   ├── db.py             # Database connection (SQLite via SQLAlchemy & databases)
-│   │   └── request_log.py    # ORM model for persisting requests
+│   │   ├── db.py             # Database connection (SQLite + SQLAlchemy/databases)
+│   │   └── request_log.py    # ORM model for logging API calls
 │   ├── schemas/
-│   │   └── math.py           # Pydantic models for request/response
+│   │   └── math.py           # Pydantic models
 │   └── utils/
-│       ├── cache.py          # fastapi-cache2 configuration
-│       ├── monitoring.py     # Prometheus metrics setup
-│       ├── auth.py           # JWT-based authentication
+│       ├── cache.py          # fastapi-cache2 config
+│       ├── monitoring.py     # Prometheus metrics setup (if enabled)
+│       ├── auth.py           # JWT-based auth (optional)
 │       └── logging.py        # Async message publishing (RabbitMQ/Kafka)
 ├── docker/
-│   ├── Dockerfile            # Container definition
-│   └── docker-compose.yml    # API + Redis/RabbitMQ/Kafka stack
-├── requirements.txt          # Python dependencies
+│   ├── Dockerfile            # Build definition
+│   └── docker-compose.yml    # Service stack: API, Redis, RabbitMQ/Kafka
+├── requirements.txt          # Dependencies
 ├── .flake8                   # Linting rules
 └── .gitignore
 ```
+
+---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-* **Docker** (>= 20.x)
-* **Docker Compose** (>= 1.29) or **Docker Compose v2**
-* **Windows PowerShell** (version 5+)
+* Docker (>= 20.x)
+* Docker Compose v1.29+ or v2
+* Windows PowerShell 5+ or Bash (macOS/Linux)
 
-### 1. Clone & Activate
+> 💡 **Windows users:** Docker must be running with **administrator privileges** to avoid engine connection errors.
+
+### 1. Clone & Setup
 
 ```bash
-git clone https://github.com/your-org/arithmos-service.git
+git clone https://github.com/DurdeuVlad/arithmos-service.git
 cd arithmos-service
 python3 -m venv .venv
-```
-
-```powershell
-# Windows PowerShell:
+# Activate environment:
+# PowerShell:
 .\.venv\Scripts\Activate.ps1
-```
-
-```bash
 # macOS/Linux:
 source .venv/bin/activate
 ```
@@ -62,106 +63,89 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 3. Configure
+### 3. Configure Environment
 
-Copy `.env.example` to `.env` and adjust variables as needed. By default, the local setup uses SQLite and Docker containers for Redis, RabbitMQ, and Kafka.
+Copy `.env.example` to `.env` and update variables as needed. Default setup uses SQLite, Redis, and optionally RabbitMQ/Kafka via Docker.
 
-### 4. Start the Stack
+### 4. Launch Services
 
 ```bash
-# Rebuild and start all services in detached mode
 docker-compose up --build -d
 ```
 
-* **API**: `http://localhost:8000`
-* **Metrics**: `http://localhost:8001/metrics`
+* API: [http://localhost:8000](http://localhost:8000)
+* Docs (Swagger/OpenAPI): [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ### 5. Health Check
 
 ```powershell
-Invoke-RestMethod \
-  -Uri http://localhost:8000/health \
-  -Method Get
+Invoke-RestMethod -Uri http://localhost:8000/health -Method Get
 ```
 
 Expected response:
 
 ```json
-{
-  "status": "ok"
-}
+{ "status": "ok" }
 ```
 
-## 📝 API Endpoints
+---
 
-| Method | Path        | Description                      |
-| ------ | ----------- | -------------------------------- |
-| POST   | `/pow`      | Compute `base ** exp`            |
-| GET    | `/fib/{n}`  | Return the n-th Fibonacci number |
-| GET    | `/fact/{n}` | Return the factorial of n        |
-| GET    | `/logs`     | Retrieve recent request logs     |
+## 📋 API Endpoints
 
-Explore Swagger UI and OpenAPI schema at:
+| Method | Path      | Description                      |
+| ------ | --------- | -------------------------------- |
+| POST   | /pow      | Compute base \*\* exp            |
+| GET    | /fib/{n}  | Return the n-th Fibonacci number |
+| GET    | /fact/{n} | Return the factorial of n        |
+| GET    | /logs     | Retrieve recent request logs     |
 
-```bash
-http://localhost:8000/docs
-```
+---
 
-## 🔧 Test Requests via PowerShell
+## ⚙️ Example Requests (PowerShell)
 
-1. **Power (POST /pow)**
+### Power (POST /pow)
 
 ```powershell
-Invoke-RestMethod \
-  -Uri http://localhost:8000/api/pow \
-  -Method Post \
-  -ContentType "application/json" \
-  -Body '{ "base": 2, "exp": 8 }'
+Invoke-RestMethod -Uri http://localhost:8000/api/pow -Method Post -ContentType "application/json" -Body '{ "base": 2, "exp": 8 }'
 ```
 
-**Response:**
+Response:
 
 ```json
 { "result": 256.0 }
 ```
 
-2. **Fibonacci (GET /fib/{n})**
+### Fibonacci (GET /fib/{n})
 
 ```powershell
-Invoke-RestMethod \
-  -Uri http://localhost:8000/api/fib/10 \
-  -Method Get
+Invoke-RestMethod -Uri http://localhost:8000/api/fib/10 -Method Get
 ```
 
-**Response:**
+Response:
 
 ```json
 { "result": 55 }
 ```
 
-3. **Factorial (GET /fact/{n})**
+### Factorial (GET /fact/{n})
 
 ```powershell
-Invoke-RestMethod \
-  -Uri http://localhost:8000/api/fact/5 \
-  -Method Get
+Invoke-RestMethod -Uri http://localhost:8000/api/fact/5 -Method Get
 ```
 
-**Response:**
+Response:
 
 ```json
 { "result": 120 }
 ```
 
-4. **View Logs (GET /logs)**
+### View Logs (GET /logs)
 
 ```powershell
-Invoke-RestMethod \
-  -Uri http://localhost:8000/api/logs?limit=5 \
-  -Method Get
+Invoke-RestMethod -Uri http://localhost:8000/api/logs?limit=5 -Method Get
 ```
 
-**Sample Response:**
+Sample Response:
 
 ```json
 [
@@ -182,19 +166,38 @@ Invoke-RestMethod \
 ]
 ```
 
-## 🐳 Docker
+---
+
+## 🔐 Authentication (JWT - Optional)
+
+To enable JWT authentication:
+
+1. Configure `.env`:
+
+```env
+JWT_SECRET=supersecretkey
+JWT_ALGORITHM=HS256
+JWT_EXPIRE_HOURS=24
+```
+
+2. Use `Depends(get_current_user)` to secure routes.
+3. Issue tokens via a login route (to be implemented separately).
+
+Useful for securing logs or extending service with user access control.
+
+---
+
+## 🐳 Docker Commands
 
 ```bash
-# Build & Run Full Stack
+# Build & launch full stack
 docker-compose up --build
-```
 
-```bash
-# Stop & Clean Up (preserves the SQLite volume)
+# Stop & clean up (preserves database volume)
 docker-compose down
-```
 
-```bash
-# Remove Database
+# Remove SQLite database
 rm -rf data/arithmos.db
 ```
+
+---

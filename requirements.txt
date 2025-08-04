@@ -41,3 +41,4 @@ databases[sqlite]
 fastapi-jwt-auth-compat
 PyJWT>=2.6.0
 sqlalchemy
+aioredis

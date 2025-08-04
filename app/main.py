@@ -4,11 +4,14 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers.math_ops import router as math_router
 from app.utils.monitoring import start_metrics_server
-from app.utils.cache import init_cache
 from app.models.db import database
 
 from sqlalchemy import create_engine
 from app.models.db import DATABASE_URL, metadata
+
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
+import aioredis
 
 # Creează tabelele definite de metadata (dacă nu există deja)
 sync_db_url = DATABASE_URL.replace("+aiosqlite", "")
@@ -21,8 +24,8 @@ metadata.create_all(bind=engine)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     start_metrics_server()
-    init_cache()
-    # ↑ tabelele sunt deja create aici
+    redis = aioredis.from_url("redis://redis")
+    FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
     await database.connect()
     yield
     await database.disconnect()
@@ -51,7 +54,6 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-
     uvicorn.run(
         "app.main:app", host="0.0.0.0", port=8000, reload=True
     )
