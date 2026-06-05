@@ -70,7 +70,7 @@ Copy `.env.example` to `.env` and update variables as needed. Default setup uses
 ### 4. Launch Services
 
 ```bash
-docker-compose up --build -d
+docker compose -f docker/docker-compose.yml up -d --build
 ```
 
 * API: [http://localhost:8000](http://localhost:8000)
@@ -92,12 +92,12 @@ Expected response:
 
 ## 📋 API Endpoints
 
-| Method | Path      | Description                      |
-| ------ | --------- | -------------------------------- |
-| POST   | /pow      | Compute base \*\* exp            |
-| GET    | /fib/{n}  | Return the n-th Fibonacci number |
-| GET    | /fact/{n} | Return the factorial of n        |
-| GET    | /logs     | Retrieve recent request logs     |
+| Method | Path           | Description                      |
+| ------ | -------------- | -------------------------------- |
+| POST   | /api/pow       | Compute base \*\* exp            |
+| GET    | /api/fib/{n}   | Return the n-th Fibonacci number |
+| GET    | /api/fact/{n}  | Return the factorial of n        |
+| GET    | /api/logs      | Retrieve recent request logs     |
 
 ---
 
@@ -191,10 +191,10 @@ Useful for securing logs or extending service with user access control.
 
 ```bash
 # Build & launch full stack
-docker-compose up --build
+docker compose -f docker/docker-compose.yml up -d --build
 
 # Stop & clean up (preserves database volume)
-docker-compose down
+docker compose -f docker/docker-compose.yml down
 
 # Remove SQLite database
 rm -rf data/arithmos.db

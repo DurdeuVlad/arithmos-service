@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,7 +25,8 @@ metadata.create_all(bind=engine)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     start_metrics_server()
-    redis = aioredis.from_url("redis://redis")
+    redis_url = os.getenv("REDIS_URL", "redis://redis:6379/0")
+    redis = aioredis.from_url(redis_url)
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
     await database.connect()
     yield
